@@ -82,9 +82,15 @@ impl Rest {
 
     pub async fn post<T: DeserializeOwned, B: Serialize>(url: &str, body: B) -> anyhow::Result<T> {
         let client = reqwest::Client::new();
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            reqwest::header::HeaderValue::from_static("cnctd_rest"),
+        );
     
         let res = client
             .post(url)
+            .headers(headers)
             .json(&body)
             .send()
             .await?
@@ -100,6 +106,10 @@ impl Rest {
         headers.insert(
             "Authorization",
             reqwest::header::HeaderValue::from_str(&format!("token {}", token))?,
+        );
+        headers.insert(
+            "User-Agent",
+            reqwest::header::HeaderValue::from_static("cnctd_rest"),
         );
     
         let res = client
