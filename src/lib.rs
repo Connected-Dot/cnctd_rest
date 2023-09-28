@@ -9,9 +9,15 @@ pub struct Rest;
 impl Rest {
     pub async fn get<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
         let client = reqwest::Client::new();
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            reqwest::header::HeaderValue::from_static("cnctd_rest"),
+        );
     
         let res = client
             .get(url)
+            .headers(headers)
             .send()
             .await?
             .json::<T>()
