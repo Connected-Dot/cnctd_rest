@@ -142,6 +142,38 @@ impl Rest {
             reqwest::header::HeaderValue::from_static("cnctd_rest"),
         );
     
+        let req = client
+            .post(url)
+            .headers(headers)
+            .json(&body);
+
+        println!("request: {:?}", req);
+            
+        let res = req
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
+    
+        Ok(res)
+    }
+
+    pub async fn post_with_headers<T: DeserializeOwned, B: Serialize>(url: &str, additional_headers: HashMap<String, String>, body: B) -> anyhow::Result<T> {
+        let client = reqwest::Client::new();
+        let mut headers = reqwest::header::HeaderMap::new();
+        
+        headers.insert(
+            "User-Agent",
+            reqwest::header::HeaderValue::from_static("cnctd_rest"),
+        );
+
+        for (key, value) in additional_headers {
+            headers.insert(
+                reqwest::header::HeaderName::from_bytes(key.as_bytes())?,
+                reqwest::header::HeaderValue::from_str(&value)?,
+            );
+        }
+    
         let res = client
             .post(url)
             .headers(headers)
