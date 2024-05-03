@@ -129,4 +129,28 @@ impl Rest {
     
         Ok(res)
     }
+
+    pub async fn post_with_bearer<T: DeserializeOwned, B: Serialize>(url: &str, token: &str, body: B) -> anyhow::Result<T> {
+        let client = reqwest::Client::new();
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            "Authorization",
+            reqwest::header::HeaderValue::from_str(&format!("Bearer {}", token))?,
+        );
+        headers.insert(
+            "User-Agent",
+            reqwest::header::HeaderValue::from_static("cnctd_rest"),
+        );
+    
+        let res = client
+            .post(url)
+            .headers(headers)
+            .json(&body)
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
+    
+        Ok(res)
+    }
 }
