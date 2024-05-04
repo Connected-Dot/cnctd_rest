@@ -1,5 +1,5 @@
 use std::{collections::HashMap, time::Duration, fmt::Debug};
-
+use anyhow::anyhow;
 use reqwest::header::{HeaderMap, HeaderName};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -161,7 +161,7 @@ impl Rest {
     pub async fn post_with_headers<T: DeserializeOwned, B: Serialize>(url: &str, additional_headers: HashMap<String, String>, body: B) -> anyhow::Result<T> {
         let client = reqwest::Client::new();
         let mut headers = reqwest::header::HeaderMap::new();
-        
+
         headers.insert(
             "User-Agent",
             reqwest::header::HeaderValue::from_static("cnctd_rest"),
@@ -179,8 +179,20 @@ impl Rest {
             .headers(headers)
             .json(&body)
             .send()
-            .await?
-            .json::<T>()
+            .await?;
+
+        println!("response: {:?}", res);
+        let status = res.status().clone();
+
+        if !status.is_success() {
+            let status_str = res.text().await;
+            match status_str {
+                Ok(text) => return Err(anyhow!(text)),
+                Err(err) => return Err(anyhow!(err)),
+            };
+        }
+            
+        let res = res.json::<T>()
             .await?;
     
         Ok(res)
